@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Noxtrum Calc · The Legend of Neverland</title>
+    <style>
+        /* ===== VARIABLES ===== */
+        :root {
+            --bg-dark: #0a0c12;
+            --bg-darker: #05070a;
+            --bg-gradient: radial-gradient(circle at 30% 10%, #1e2a3a, #0a0c12 80%);
+            --glass-bg: rgba(15, 20, 30, 0.65);
+            --glass-border: rgba(74, 144, 226, 0.25);
+            --glass-border-hover: rgba(74, 144, 226, 0.6);
+            --accent: #3b82f6;
+            --accent-soft: #2563eb;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #f0f4fa;
+            --text-dim: #a0b3d9;
+            --crit: #fbbf24;
+            --danger: #ef4444;
+            --success: #10b981;
+            --sidebar-width: 280px;
+            --shadow-heavy: 0 20px 40px -10px rgba(0, 0, 0, 0.8);
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+
+        body {
+            background: var(--bg-darker);
+            color: var(--text-main);
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* ===== LOADER ===== */
+        .loader-wrapper {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #05070a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease, visibility 0.8s ease;
+        }
+
+        .loader-wrapper.fade-out {
+            opacity: 0;
+            visibility: hidden;
+        }
+
+        .loader-content {
+            text-align: center;
+            animation: glowPulse 2s infinite;
+        }
+
+        .loader-content h1 {
+            font-size: 4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            letter-spacing: 4px;
+        }
+
+        .loader-content .subtitle {
+            color: var(--text-dim);
+            font-size: 1.2rem;
+            letter-spacing: 2px;
+            margin-bottom: 30px;
+        }
+
+        .loader-content .by-hawkyss {
+            color: var(--accent);
+            font-size: 1rem;
+            opacity: 0.8;
+            margin-top: 50px;
+            position: relative;
+            display: inline-block;
+        }
+
+        .loader-content .by-hawkyss::before,
+        .loader-content .by-hawkyss::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            width: 50px;
+            height: 1px;
+            background: var(--accent);
+            opacity: 0.3;
+        }
+
+        .loader-content .by-hawkyss::before {
+            right: 100%;
+            margin-right: 15px;
+        }
+
+        .loader-content .by-hawkyss::after {
+            left: 100%;
+            margin-left: 15px;
+        }
+
+        .loader-spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid rgba(59, 130, 246, 0.1);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            animation: spin 1s linear infinite;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes glowPulse {
+            0% { filter: drop-shadow(0 0 20px rgba(59,130,246,0.3)); }
+            50% { filter: drop-shadow(0 0 40px rgba(59,130,246,0.6)); }
+            100% { filter: drop-shadow(0 0 20px rgba(59,130,246,0.3)); }
+        }
+
+        /* ===== OVERLAY PARA MÓVIL ===== */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(3px);
+            z-index: 999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* ===== CANVAS DE PARTÍCULAS ===== */
+        #particle-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.5;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: rgba(8, 12, 18, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-right: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            padding: 28px 0;
+            position: fixed;
+            height: 100vh;
+            left: 0;
+            top: 0;
+            transition: transform 0.4s ease, box-shadow 0.3s;
+            z-index: 1000;
+            box-shadow: 4px 0 30px rgba(0, 0, 0, 0.8);
+        }
+
+        .sidebar:hover {
+            border-right-color: var(--glass-border-hover);
+            box-shadow: 8px 0 40px rgba(59, 130, 246, 0.2);
+        }
+
+        .brand {
+            padding: 0 24px 28px;
+            border-bottom: 1px solid var(--glass-border);
+            margin-bottom: 24px;
+            position: relative;
+        }
+
+        .brand h1 {
+            font-size: 2rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+            background: linear-gradient(135deg, #fff, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 30px var(--accent-glow);
+            line-height: 1.2;
+        }
+
+        .brand span {
+            font-size: 0.7rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            opacity: 0.8;
+        }
+
+        .nav-menu {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: 0 20px;
+            flex: 1;
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 14px 18px;
+            color: var(--text-dim);
+            text-decoration: none;
+            border-radius: 18px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: var(--transition);
+            gap: 12px;
+            border: 1px solid transparent;
+        }
+
+        .nav-link i { font-size: 1.3rem; width: 28px; }
+
+        .nav-link:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: var(--glass-border);
+            color: #fff;
+            transform: translateX(6px);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .nav-link.active {
+            background: linear-gradient(145deg, var(--accent), var(--accent-soft));
+            color: #fff;
+            box-shadow: 0 8px 20px var(--accent-glow);
+            border-color: transparent;
+        }
+
+        .badge-soon {
+            margin-left: auto;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 0.6rem;
+            padding: 4px 10px;
+            border-radius: 40px;
+            color: var(--text-dim);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            padding: 30px 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: margin-left 0.4s ease;
+            width: 100%;
+            position: relative;
+            z-index: 5;
+        }
+
+        .topbar {
+            width: 100%;
+            max-width: 1000px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
+            border-radius: 60px;
+            border: 1px solid var(--glass-border);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1.8rem;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .menu-toggle:hover { transform: scale(1.1); }
+
+        .lang-switch {
+            display: flex;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            padding: 4px;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-dim);
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            text-transform: uppercase;
+        }
+
+        .lang-btn.active {
+            background: var(--accent);
+            color: #fff;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* ===== CARD PRINCIPAL ===== */
+        .app-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            padding: 40px;
+            width: 100%;
+            max-width: 1000px;
+            box-shadow: var(--shadow-heavy);
+            transition: var(--transition);
+            animation: fadeInUp 0.6s ease-out;
+        }
+
+        .app-card:hover {
+            border-color: var(--glass-border-hover);
+            box-shadow: 0 30px 60px -10px rgba(59, 130, 246, 0.4);
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin: 30px 0 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 80px;
+            height: 2px;
+            background: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        /* ===== INPUTS CON SLIDER ===== */
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .input-group label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: help;
+            transition: color 0.2s;
+        }
+
+        .input-group label:hover {
+            color: var(--accent);
+        }
+
+        /* Tooltip */
+        .input-group label[data-tooltip] {
+            position: relative;
+        }
+        .input-group label[data-tooltip]:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 150%;
+            left: 0;
+            background: #1e293b;
+            color: #fff;
+            padding: 6px 12px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            border: 1px solid var(--accent);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            z-index: 100;
+        }
+
+        .input-wrapper {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            transition: var(--transition);
+            backdrop-filter: blur(5px);
+        }
+
+        .input-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+            background: rgba(0, 0, 0, 0.6);
+        }
+
+        .input-wrapper input[type="number"] {
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-size: 1rem;
+            font-weight: 600;
+            padding: 14px 0;
+            outline: none;
+        }
+
+        .input-wrapper span {
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            margin-left: 8px;
+            font-weight: bold;
+        }
+
+        /* Slider personalizado */
+        .slider-container {
+            margin-top: 4px;
+            width: 100%;
+        }
+
+        input[type=range] {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 6px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            outline: none;
+        }
+
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 15px var(--accent-glow);
+            border: 2px solid #fff;
+            transition: 0.1s;
+        }
+
+        input[type=range]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* ===== BOTÓN ===== */
+        .btn-calc {
+            width: 100%;
+            background: linear-gradient(145deg, var(--accent), #1e4f9e);
+            color: #fff;
+            border: none;
+            padding: 18px;
+            border-radius: 40px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 40px;
+            cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-calc::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-calc:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.7);
+        }
+
+        .btn-calc:hover::before {
+            left: 100%;
+        }
+
+        .btn-calc:active {
+            transform: translateY(2px);
+        }
+
+        /* ===== RESULTADOS ===== */
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .result-box {
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: 30px;
+            padding: 24px;
+            backdrop-filter: blur(10px);
+            transition: var(--transition);
+            animation: glowPulse 3s infinite alternate;
+        }
+
+        .result-box:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+
+        @keyframes glowPulse {
+            0% { box-shadow: 0 0 10px rgba(59,130,246,0.1); }
+            100% { box-shadow: 0 0 30px rgba(59,130,246,0.2); }
+        }
+
+        .result-box h4 {
+            color: var(--accent);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .res-text {
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+        }
+
+        .highlight-yellow { color: var(--crit); font-weight: bold; text-shadow: 0 0 8px rgba(251,191,36,0.5); }
+        .highlight-blue { color: #60a5fa; font-weight: bold; }
+        .highlight-red { color: var(--danger); font-weight: bold; }
+        .highlight-green { color: var(--success); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { margin-left: 0; padding: 20px 15px; }
+            .menu-toggle { display: block; }
+            .results-container { grid-template-columns: 1fr; }
+            .topbar { margin-bottom: 20px; padding: 8px 16px; }
+            .app-card { padding: 25px; }
+            .grid-inputs { grid-template-columns: 1fr; }
+        }
+
+        /* Iconos simulados */
+        .icon-sword::before { content: "⚔️"; margin-right: 6px; }
+        .icon-dragon::before { content: "🐉"; }
+        .icon-fairy::before { content: "🧚"; }
+        .icon-shield::before { content: "🛡️"; }
+    </style>
+</head>
+<body>
+
+    <!-- LOADER -->
+    <div class="loader-wrapper" id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <h1>NOXTRUM</h1>
+            <div class="subtitle">The Legend of Neverland</div>
+            <div class="by-hawkyss">By Hawkyss</div>
+        </div>
+    </div>
+
+    <!-- OVERLAY PARA MÓVIL -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeMenu()"></div>
+
+    <!-- Canvas de partículas -->
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Sidebar -->
+    <nav class="sidebar" id="sidebar">
+        <div class="brand">
+            <h1>NOXTRUM</h1>
+            <span>The Legend of Neverland</span>
+        </div>
+        <ul class="nav-menu">
+            <li><a href="#" class="nav-link active"><span class="icon-sword"></span> Calc. Combate</a></li>
+            <li><a href="#" class="nav-link"><span class="icon-dragon"></span> Dragones <span class="badge-soon">Pronto</span></a></li>
+            <li><a href="#" class="nav-link"><span class="icon-fairy"></span> Hadas <span class="badge-soon">Pronto</span></a></li>
+            <li><a href="#" class="nav-link"><span class="icon-shield"></span> Equipo <span class="badge-soon">Pronto</span></a></li>
+        </ul>
+    </nav>
+
+    <main class="main-content">
+        <div class="topbar">
+            <button class="menu-toggle" onclick="toggleMenu()">☰</button>
+            <div style="flex-grow: 1;"></div>
+            <div class="lang-switch">
+                <button class="lang-btn active" onclick="setLang('es', this)">ES</button>
+                <button class="lang-btn" onclick="setLang('en', this)">EN</button>
+                <button class="lang-btn" onclick="setLang('pt', this)">PT</button>
+            </div>
+        </div>
+
+        <div class="app-card">
+            <!-- Sección Atacante -->
+            <h3 class="section-title" id="t-your-stats">📊 Tus Estadísticas (Atacante)</h3>
+            <div class="grid-inputs" id="attacker-grid"></div>
+
+            <!-- Sección Defensor -->
+            <h3 class="section-title" id="t-enemy-stats" style="margin-top: 35px;">👾 Estadísticas Enemigas (Defensor)</h3>
+            <div class="grid-inputs" id="defender-grid"></div>
+
+            <button class="btn-calc" onclick="calculate()" id="btn-calc">⚡ Procesar Simulación</button>
+
+            <div class="results-container">
+                <div class="result-box">
+                    <h4 id="t-res-1">🎯 Eficiencia de Combate (v1.53)</h4>
+                    <div id="results" class="res-text">—</div>
+                </div>
+                <div class="result-box">
+                    <h4 id="t-res-2">📉 Análisis de Sistema</h4>
+                    <div id="results2" class="res-text">—</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // ========== OCULTAR LOADER ==========
+        window.addEventListener('load', function() {
+            setTimeout(function() {
+                document.getElementById('loader').classList.add('fade-out');
+            }, 1500); // Mostrar el loader por 1.5 segundos
+        });
+
+        // ========== FUNCIONES DEL MENÚ MÓVIL ==========
+        function toggleMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.toggle('active');
+            overlay.classList.toggle('active');
+            
+            // Evitar scroll del body cuando el menú está abierto
+            if (sidebar.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        function closeMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            sidebar.classList.remove('active');
+            overlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Cerrar menú con tecla ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeMenu();
+            }
+        });
+
+        // ========== CONFIGURACIÓN DE INPUTS ==========
+        // IDs de los inputs con nivel actualizado a 260
+        const attackerFields = [
+            { id: 'cr', label: 'lCr', default: 150, suffix: '%', min: 0, max: 300, tooltip: 'Probabilidad de golpe crítico' },
+            { id: 'cdmg', label: 'lCdmg', default: 50, suffix: '%', min: 0, max: 200, tooltip: 'Daño crítico extra (base 150%)' },
+            { id: 'br', label: 'lBr', default: 100, suffix: '%', min: 0, max: 300, tooltip: 'Penetración de bloqueo' },
+            { id: 'ig', label: 'lIg', default: 20, suffix: '%', min: 0, max: 100, tooltip: 'Ignorar bloqueo' },
+            { id: 'brs', label: 'lBrs', default: 0, suffix: '%', min: 0, max: 100, tooltip: 'Supresión de recuperación de bloqueo' },
+            { id: 'lvl_p', label: 'lLevelP', default: 260, suffix: 'Lv', min: 1, max: 300, tooltip: 'Tu nivel' } // Actualizado a 260
+        ];
+
+        const defenderFields = [
+            { id: 'ten', label: 'lTen', default: 120, suffix: '%', min: 0, max: 300, tooltip: 'Inmunidad crítica' },
+            { id: 'cdmgr', label: 'lCdmgr', default: 0, suffix: '%', min: 0, max: 200, tooltip: 'Reducción de daño crítico' },
+            { id: 'blk', label: 'lBlk', default: 150, suffix: '%', min: 0, max: 300, tooltip: 'Probabilidad de bloqueo base' },
+            { id: 'bdr', label: 'lBdr', default: 0, suffix: '%', min: 0, max: 100, tooltip: 'Reducción de daño al bloquear' },
+            { id: 'brecov', label: 'lBrecov', default: 20, suffix: '%', min: 0, max: 100, tooltip: 'Recuperación de bloqueo' },
+            { id: 'lvl_e', label: 'lLevelE', default: 260, suffix: 'Lv', min: 1, max: 300, tooltip: 'Nivel del enemigo' } // Actualizado a 260
+        ];
+
+        // ========== GENERAR INPUTS CON SLIDER ==========
+        function createInputs() {
+            const attackerGrid = document.getElementById('attacker-grid');
+            const defenderGrid = document.getElementById('defender-grid');
+            attackerGrid.innerHTML = '';
+            defenderGrid.innerHTML = '';
+
+            // Atacante
+            attackerFields.forEach(field => {
+                const div = document.createElement('div');
+                div.className = 'input-group';
+                div.innerHTML = `
+                    <label data-tooltip="${field.tooltip}" id="${field.label}">${field.label}</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="${field.id}" value="${field.default}" min="${field.min}" max="${field.max}">
+                        <span>${field.suffix}</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="slider-${field.id}" min="${field.min}" max="${field.max}" value="${field.default}" step="1">
+                    </div>
+                `;
+                attackerGrid.appendChild(div);
+            });
+
+            // Defensor
+            defenderFields.forEach(field => {
+                const div = document.createElement('div');
+                div.className = 'input-group';
+                div.innerHTML = `
+                    <label data-tooltip="${field.tooltip}" id="${field.label}">${field.label}</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="${field.id}" value="${field.default}" min="${field.min}" max="${field.max}">
+                        <span>${field.suffix}</span>
+                    </div>
+                    <div class="slider-container">
+                        <input type="range" id="slider-${field.id}" min="${field.min}" max="${field.max}" value="${field.default}" step="1">
+                    </div>
+                `;
+                defenderGrid.appendChild(div);
+            });
+
+            // Sincronizar número y slider
+            document.querySelectorAll('input[type=number]').forEach(numInput => {
+                const slider = document.getElementById('slider-' + numInput.id);
+                if (slider) {
+                    numInput.addEventListener('input', () => {
+                        slider.value = numInput.value;
+                        calculate(); // recalcular en tiempo real
+                    });
+                    slider.addEventListener('input', () => {
+                        numInput.value = slider.value;
+                        calculate();
+                    });
+                }
+            });
+        }
+
+        // ========== IDIOMAS ==========
+        let currentLang = 'es';
+        const i18n = {
+            es: {
+                yourStats: "📊 Tus Estadísticas (Atacante)", enemyStats: "👾 Estadísticas Enemigas (Defensor)",
+                lCr: "Prob. Crítica", lCdmg: "Daño Crítico (+150 base)", lBr: "Penetración Bloqueo",
+                lIg: "Ignorar Bloqueo", lBrs: "Supresión Recup. Bloq", lTen: "Inmunidad Crítica",
+                lCdmgr: "Reducción Daño Crit", lBlk: "Prob. Bloqueo Base", lBdr: "Reducción Daño Bloq",
+                lBrecov: "Recuperación Bloqueo", btnCalc: "⚡ Procesar Simulación",
+                tRes1: "🎯 Eficiencia de Combate (v1.53)", tRes2: "📉 Análisis de Sistema",
+                lLevelP: "Tu Nivel", lLevelE: "Nivel Enemigo",
+                txtCrit: "Prob. Crítico Real:", txtBlock: "Prob. Bloqueo Real:", txtDmg: "Daño Promedio Final:",
+                msgCompete: "en caso de no cargar cambia el idioma, Info: Bloqueo y Crítico compiten (Suma > 100%).",
+                msgPrePatch: "Daño Pre-Patch:", msgLoss: "Pérdida por fórmula:",
+                msgOptimal: "Stats óptimos. Sin penalización cruzada (Suma ≤ 100%).",
+                msgPenalty: "⚠️ Penalización de Nivel:"
+            },
+            en: {
+                yourStats: "📊 Your Stats (Attacker)", enemyStats: "👾 Enemy Stats (Defender)",
+                lCr: "Crit Rate", lCdmg: "Crit Damage (+150 base)", lBr: "Break Rate",
+                lIg: "Ignore Block", lBrs: "Block Recov. Suppress", lTen: "Crit Immunity",
+                lCdmgr: "Crit Dmg Reduction", lBlk: "Base Block Rate", lBdr: "Block Dmg Reduction",
+                lBrecov: "Block Recovery", btnCalc: "⚡ Run Simulation",
+                tRes1: "🎯 Combat Efficiency (v1.53)", tRes2: "📉 System Analysis",
+                lLevelP: "Your Level", lLevelE: "Enemy Level",
+                txtCrit: "Real Crit Chance:", txtBlock: "Real Block Chance:", txtDmg: "Final Avg Damage:",
+                msgCompete: "Info: Block and Crit compete (Sum > 100%).",
+                msgPrePatch: "Pre-Patch Damage:", msgLoss: "Formula loss:",
+                msgOptimal: "Optimal stats. No cross penalty (Sum ≤ 100%).",
+                msgPenalty: "⚠️ Level Penalty:"
+            },
+            pt: {
+                yourStats: "📊 Seus Atributos (Atacante)", enemyStats: "👾 Atributos Inimigos (Defensor)",
+                lCr: "Prob. Crítica", lCdmg: "Dano Crítico (+150 base)", lBr: "Penetração Bloqueio",
+                lIg: "Ignorar Bloqueio", lBrs: "Supressão Recup. Bloq", lTen: "Imunidade Crítica",
+                lCdmgr: "Redução Dano Crit", lBlk: "Prob. Bloqueio Base", lBdr: "Redução Dano Bloq",
+                lBrecov: "Recuperação Bloqueio", btnCalc: "⚡ Processar Simulação",
+                tRes1: "🎯 Eficiência de Combate (v1.53)", tRes2: "📉 Análise de Sistema",
+                lLevelP: "Seu Nível", lLevelE: "Nível Inimigo",
+                txtCrit: "Prob. Crítico Real:", txtBlock: "Prob. Bloqueio Real:", txtDmg: "Dano Médio Final:",
+                msgCompete: "Info: Bloqueio e Crítico competem (Soma > 100%).",
+                msgPrePatch: "Dano Pré-Patch:", msgLoss: "Perda por fórmula:",
+                msgOptimal: "Status ótimos. Sem penalidade cruzada (Soma ≤ 100%).",
+                msgPenalty: "⚠️ Penalidade de Nível:"
+            }
+        };
+
+        function setLang(lang, btnElement) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+            btnElement.classList.add('active');
+
+            const t = i18n[lang];
+            document.getElementById('t-your-stats').innerText = t.yourStats;
+            document.getElementById('t-enemy-stats').innerText = t.enemyStats;
+            document.getElementById('btn-calc').innerText = t.btnCalc;
+            document.getElementById('t-res-1').innerText = t.tRes1;
+            document.getElementById('t-res-2').innerText = t.tRes2;
+
+            // Actualizar labels
+            attackerFields.forEach(f => {
+                const labelEl = document.getElementById(f.label);
+                if (labelEl) labelEl.innerText = t[f.label];
+            });
+            defenderFields.forEach(f => {
+                const labelEl = document.getElementById(f.label);
+                if (labelEl) labelEl.innerText = t[f.label];
+            });
+
+            calculate();
+        }
+
+        // ========== CÁLCULO PRINCIPAL ==========
+        function calculate() {
+            const t = i18n[currentLang];
+
+            // Leer valores
+            let cr = Number(document.getElementById('cr')?.value) || 0;
+            let cdmg = 150 + (Number(document.getElementById('cdmg')?.value) || 0);
+            let br = Number(document.getElementById('br')?.value) || 0;
+            let ig = Number(document.getElementById('ig')?.value) || 0;
+            let brs = Number(document.getElementById('brs')?.value) || 0;
+            let ten = Number(document.getElementById('ten')?.value) || 0;
+            let cdmgr = Number(document.getElementById('cdmgr')?.value) || 0;
+            let block = Number(document.getElementById('blk')?.value) || 0;
+            let brecov = Number(document.getElementById('brecov')?.value) || 0;
+            let bdr = Number(document.getElementById('bdr')?.value) || 0;
+            let lvlP = Number(document.getElementById('lvl_p')?.value) || 1;
+            let lvlE = Number(document.getElementById('lvl_e')?.value) || 1;
+
+            // Aplicar reducciones
+            if (cdmgr) cdmg -= cdmgr;
+            if (bdr) ig -= bdr;
+            if (brs) brecov -= brs;
+
+            let level_diff = Math.max(0, lvlE - lvlP);
+            let level_penalty = level_diff * 0.5;
+
+            let net_cr = Math.max(0, cr - ten - level_penalty);
+            let net_bl = Math.max(0, block - br);
+
+            let output = '', analysis = '';
+
+            if (net_cr + net_bl > 100) {
+                let crit_chance = net_cr / (net_cr + net_bl);
+                let block_rate_ratio = net_bl / (net_cr + net_bl);
+                let white_chance = (1 - crit_chance) * (1 - block_rate_ratio);
+                let block_chance = (1 - crit_chance) * block_rate_ratio;
+                let blocked_damage = (1 - (0.5 * (1 - (ig / 100)))) * (1 - brecov / 100);
+                let total_dmg = (crit_chance * (cdmg / 100)) + white_chance + (block_chance * blocked_damage);
+
+                output += `<strong>${t.txtCrit}</strong> <span class="highlight-yellow">${(crit_chance * 100).toFixed(2)}%</span><br>`;
+                output += `<strong>${t.txtBlock}</strong> <span class="highlight-blue">${(block_chance * 100).toFixed(2)}%</span><br><br>`;
+                output += `<strong>${t.txtDmg}</strong> <span style="font-size:1.3rem; color:#fff">${(total_dmg * 100).toFixed(2)}%</span>`;
+
+                let crit_o = Math.min(1, net_cr / 100);
+                let block_o = Math.min(1, (1 - crit_o) * (net_bl / 100));
+                let white_o = Math.max(0, (1 - crit_o) * (1 - (net_bl / 100)));
+                let total_dmg_o = (crit_o * (cdmg / 100)) + white_o + (block_o * blocked_damage);
+                analysis += `<span style="color:var(--text-dim)">${t.msgCompete}</span><br><br>`;
+                analysis += `${t.msgPrePatch} ${(total_dmg_o * 100).toFixed(2)}%<br>`;
+                analysis += `${t.msgLoss} <span class="highlight-red">${((1 - (total_dmg / total_dmg_o)) * 100).toFixed(2)}%</span>`;
+            } else {
+                let crit_chance = net_cr / 100;
+                let block_chance = (1 - crit_chance) * (net_bl / 100);
+                let white_chance = (1 - crit_chance) * (1 - (net_bl / 100));
+                let blocked_damage = (1 - (0.5 * (1 - (ig / 100)))) * (1 - brecov / 100);
+                let total_dmg = (crit_chance * (cdmg / 100)) + white_chance + (block_chance * blocked_damage);
+
+                output += `<strong>${t.txtCrit}</strong> <span class="highlight-yellow">${(crit_chance * 100).toFixed(2)}%</span><br>`;
+                output += `<strong>${t.txtBlock}</strong> <span class="highlight-blue">${(block_chance * 100).toFixed(2)}%</span><br><br>`;
+                output += `<strong>${t.txtDmg}</strong> <span style="font-size:1.3rem; color:#fff">${(total_dmg * 100).toFixed(2)}%</span>`;
+
+                analysis += `<span class="highlight-green">${t.msgOptimal}</span>`;
+            }
+
+            if (level_penalty > 0) {
+                analysis += `<br><br><span style="color:var(--crit); font-size:0.8rem">${t.msgPenalty} -${level_penalty}% Crítico</span>`;
+            }
+
+            document.getElementById('results').innerHTML = output;
+            document.getElementById('results2').innerHTML = analysis;
+        }
+
+        // ========== PARTÍCULAS (CANVAS) ==========
+        function initParticles() {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let width, height;
+            let particles = [];
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+
+            function createParticles() {
+                particles = [];
+                for (let i = 0; i < 50; i++) {
+                    particles.push({
+                        x: Math.random() * width,
+                        y: Math.random() * height,
+                        radius: Math.random() * 2 + 1,
+                        speedX: (Math.random() - 0.5) * 0.5,
+                        speedY: (Math.random() - 0.5) * 0.5,
+                        color: `rgba(59, 130, 246, ${Math.random() * 0.3 + 0.1})`
+                    });
+                }
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = p.color;
+                    ctx.fill();
+
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+
+                    if (p.x < 0 || p.x > width) p.speedX *= -1;
+                    if (p.y < 0 || p.y > height) p.speedY *= -1;
+                });
+                requestAnimationFrame(draw);
+            }
+
+            window.addEventListener('resize', () => {
+                resize();
+                createParticles();
+            });
+
+            resize();
+            createParticles();
+            draw();
+        }
+
+        // ========== INICIALIZACIÓN ==========
+        window.onload = function() {
+            createInputs();
+            calculate();
+            initParticles();
+        };
+    </script>
+</body>
+</html>
