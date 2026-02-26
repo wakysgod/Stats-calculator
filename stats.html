@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Neverland · Calculadora Crítico/Bloqueo</title>
+    <style>
+        /* --- RESET Y VARIABLES --- */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: #000000;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* --- TARJETA PRINCIPAL --- */
+        .card {
+            background: #0c0c0c;
+            border-radius: 28px;
+            padding: 24px 20px;
+            border: 1px solid #2a2a2a;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            margin-bottom: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+
+        .card-header h2 {
+            color: #dddddd;
+            font-weight: 500;
+            font-size: 1.5rem;
+            letter-spacing: -0.02em;
+            border-left: 4px solid #2a7fff;
+            padding-left: 16px;
+        }
+
+        /* --- SELECTOR DE IDIOMA --- */
+        .lang-selector {
+            display: flex;
+            background: #1e1e1e;
+            border-radius: 40px;
+            padding: 4px;
+            border: 1px solid #333;
+        }
+
+        .lang-btn {
+            background: transparent;
+            border: none;
+            color: #aaa;
+            font-weight: 600;
+            font-size: 1rem;
+            padding: 8px 20px;
+            border-radius: 40px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .lang-btn.active {
+            background: #2a7fff;
+            color: white;
+        }
+
+        /* --- GRUPOS DE INPUTS --- */
+        .stats-group {
+            margin-bottom: 28px;
+        }
+
+        .stats-group h3 {
+            color: #ccc;
+            font-weight: 500;
+            font-size: 1.2rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px 12px;
+        }
+
+        .input-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-item label {
+            color: #9a9a9a;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            background: #1a1a1a;
+            border: 1px solid #2e2e2e;
+            border-radius: 20px;
+            padding: 4px 12px;
+            transition: 0.15s;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #2a7fff;
+            box-shadow: 0 0 0 2px #1a4faa50;
+        }
+
+        .input-wrapper input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            padding: 12px 0;
+            color: #f0f0f0;
+            font-size: 1rem;
+            font-weight: 500;
+            outline: none;
+        }
+
+        .input-wrapper span {
+            color: #6a6a6a;
+            font-weight: 600;
+            margin-left: 4px;
+        }
+
+        /* nota para daño crítico total */
+        .total-cdmg-note {
+            color: #6a8cff;
+            font-size: 0.9rem;
+            margin-top: 6px;
+            background: #141414;
+            padding: 6px 12px;
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        /* --- BOTÓN PRINCIPAL --- */
+        .btn-calcular {
+            background: #2a7fff;
+            border: none;
+            color: white;
+            font-weight: 700;
+            font-size: 1.4rem;
+            padding: 18px 0;
+            width: 100%;
+            border-radius: 60px;
+            margin: 20px 0 12px;
+            box-shadow: 0 10px 0 #0f2a4f, 0 5px 20px #2a7fff70;
+            transition: 0.1s ease;
+            cursor: pointer;
+        }
+
+        .btn-calcular:active {
+            transform: translateY(5px);
+            box-shadow: 0 5px 0 #0f2a4f, 0 5px 20px #2a7fff70;
+        }
+
+        /* --- RESULTADOS --- */
+        .resultados {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .result-box {
+            background: #0f0f0f;
+            border-radius: 24px;
+            padding: 20px;
+            border: 1px solid #2c2c2c;
+        }
+
+        .result-box h4 {
+            color: #b0b0b0;
+            font-weight: 500;
+            margin-bottom: 16px;
+            font-size: 1.2rem;
+            border-bottom: 1px dashed #333;
+            padding-bottom: 8px;
+        }
+
+        .result-content {
+            color: #e0e0e0;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        .result-content strong {
+            color: #ffb347;
+            font-weight: 600;
+        }
+
+        .result-note {
+            color: #8a8f99;
+            font-size: 0.8rem;
+            margin-top: 12px;
+            background: #191919;
+            padding: 8px 14px;
+            border-radius: 40px;
+            text-align: center;
+        }
+
+        /* --- PIE Y CRÉDITO --- */
+        .footer {
+            margin-top: 24px;
+            text-align: center;
+            color: #4a4a4a;
+            font-size: 0.9rem;
+            border-top: 1px solid #1f1f1f;
+            padding-top: 20px;
+        }
+
+        .credit {
+            color: #5f7fbf;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        /* --- AJUSTES MÓVILES EXTRA --- */
+        @media (max-width: 450px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .card-header h2 {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- TARJETA PRINCIPAL -->
+    <div class="card">
+        <div class="card-header">
+            <h2 id="main-title">⚔️ NEVERLAND · CRIT/BLOCK</h2>
+            <div class="lang-selector">
+                <button class="lang-btn active" id="btn-es">ES</button>
+                <button class="lang-btn" id="btn-pt">PT</button>
+            </div>
+        </div>
+
+        <!-- FORMULARIO -->
+        <div class="stats-group">
+            <h3 id="your-stats-title">📊 TUS ESTADÍSTICAS</h3>
+            <div class="stats-grid">
+                <div class="input-item">
+                    <label id="label-cr">Prob. Crítica</label>
+                    <div class="input-wrapper">
+                        <input id="cr" type="number" value="150" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-cdmg">Daño Crítico</label>
+                    <div class="input-wrapper">
+                        <input id="cdmg" type="number" value="50" step="any">
+                        <span>%</span>
+                    </div>
+                    <div class="total-cdmg-note" id="total-cdmg-display">⚡ total: 200%</div>
+                </div>
+                <div class="input-item">
+                    <label id="label-br">Penetración Bloqueo</label>
+                    <div class="input-wrapper">
+                        <input id="br" type="number" value="80" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-ig">Ignorar Bloqueo</label>
+                    <div class="input-wrapper">
+                        <input id="ig" type="number" value="20" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-brs">Supresión Recup. Bloqueo</label>
+                    <div class="input-wrapper">
+                        <input id="brs" type="number" value="10" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-group">
+            <h3 id="enemy-stats-title">👾 ESTADÍSTICAS ENEMIGAS</h3>
+            <div class="stats-grid">
+                <div class="input-item">
+                    <label id="label-ten">Inmunidad Crítica</label>
+                    <div class="input-wrapper">
+                        <input id="ten" type="number" value="120" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-cdmgr">Reducción Daño Crítico</label>
+                    <div class="input-wrapper">
+                        <input id="cdmgr" type="number" value="0" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-blk">Prob. Bloqueo Enemigo</label>
+                    <div class="input-wrapper">
+                        <input id="blk" type="number" value="100" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-bdr">Reducción Daño Bloqueo</label>
+                    <div class="input-wrapper">
+                        <input id="bdr" type="number" value="10" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+                <div class="input-item">
+                    <label id="label-brecov">Recuperación Bloqueo</label>
+                    <div class="input-wrapper">
+                        <input id="brecov" type="number" value="20" step="any">
+                        <span>%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOTÓN -->
+        <button class="btn-calcular" id="calc-btn">🔥 CALCULAR</button>
+
+        <!-- RESULTADOS -->
+        <div class="resultados">
+            <div class="result-box">
+                <h4 id="result-title-1">📐 RESULTADO ACTUAL</h4>
+                <div class="result-content" id="result-1">—</div>
+            </div>
+            <div class="result-box">
+                <h4 id="result-title-2">📉 COMPARACIÓN PRE-PARCHE</h4>
+                <div class="result-content" id="result-2">—</div>
+                <div class="result-note" id="same-level-note">⚡ asume mismo nivel</div>
+            </div>
+        </div>
+
+        <!-- CRÉDITO -->
+        <div class="footer">
+            <span class="credit">⚡ By Hawkyss for Noxtrum ⚡</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- DICCIONARIO ESPAÑOL / PORTUGUÉS ----------
+        const texts = {
+            es: {
+                mainTitle: '⚔️ NEVERLAND · CRIT/BLOCK',
+                yourStats: '📊 TUS ESTADÍSTICAS',
+                enemyStats: '👾 ESTADÍSTICAS ENEMIGAS',
+                labelCr: 'Prob. Crítica',
+                labelCdmg: 'Daño Crítico',
+                labelBr: 'Penetración Bloqueo',
+                labelIg: 'Ignorar Bloqueo',
+                labelBrs: 'Supresión Recup. Bloqueo',
+                labelTen: 'Inmunidad Crítica',
+                labelCdmgr: 'Reducción Daño Crítico',
+                labelBlk: 'Prob. Bloqueo Enemigo',
+                labelBdr: 'Reducción Daño Bloqueo',
+                labelBrecov: 'Recuperación Bloqueo',
+                resultTitle1: '📐 RESULTADO ACTUAL',
+                resultTitle2: '📉 COMPARACIÓN PRE-PARCHE',
+                calcBtn: '🔥 CALCULAR',
+                critChance: 'Probabilidad de <strong>golpe crítico</strong>:',
+                ifNotCrit: 'Si no es crítico, <strong>bloqueo</strong>:',
+                overall: 'Posibilidades totales:',
+                critYellow: 'Crítico (amarillo):',
+                white: 'Normal (blanco):',
+                blockedGray: 'Bloqueado (gris):',
+                dmgOutput: '🔥 <strong>Daño promedio: {0}%</strong> del base.',
+                oldAnalysisHigh: '⚡ Suma > 100: bloqueo afecta a crítico (nuevo sistema).',
+                oldAnalysisLow: '✅ Suma ≤ 100: sin interacción (crítico y bloqueo independientes).',
+                oldChances: 'Antes del parche 1.32:',
+                avgOld: 'Daño antiguo: {0}%',
+                dmgLoss: '📉 Pérdida con nuevo sistema: <strong>{0}%</strong>',
+                sameLevel: '⚡ asume mismo nivel',
+            },
+            pt: {
+                mainTitle: '⚔️ NEVERLAND · CRIT/BLOQUEIO',
+                yourStats: '📊 SEUS ATRIBUTOS',
+                enemyStats: '👾 ATRIBUTOS INIMIGOS',
+                labelCr: 'Prob. Crítica',
+                labelCdmg: 'Dano Crítico',
+                labelBr: 'Penetração Bloqueio',
+                labelIg: 'Ignorar Bloqueio',
+                labelBrs: 'Supressão Recup. Bloqueio',
+                labelTen: 'Imunidade Crítica',
+                labelCdmgr: 'Redução Dano Crítico',
+                labelBlk: 'Prob. Bloqueio Inimigo',
+                labelBdr: 'Redução Dano Bloqueio',
+                labelBrecov: 'Recuperação Bloqueio',
+                resultTitle1: '📐 RESULTADO ATUAL',
+                resultTitle2: '📉 COMPARAÇÃO PRÉ-PATCH',
+                calcBtn: '🔥 CALCULAR',
+                critChance: 'Probabilidade de <strong>acerto crítico</strong>:',
+                ifNotCrit: 'Se não crítico, <strong>bloqueio</strong>:',
+                overall: 'Probabilidades totais:',
+                critYellow: 'Crítico (amarelo):',
+                white: 'Normal (branco):',
+                blockedGray: 'Bloqueado (cinza):',
+                dmgOutput: '🔥 <strong>Dano médio: {0}%</strong> do base.',
+                oldAnalysisHigh: '⚡ Soma > 100: bloqueio afeta crítico (novo sistema).',
+                oldAnalysisLow: '✅ Soma ≤ 100: sem interação.',
+                oldChances: 'Antes do patch 1.32:',
+                avgOld: 'Dano antigo: {0}%',
+                dmgLoss: '📉 Perda com novo sistema: <strong>{0}%</strong>',
+                sameLevel: '⚡ assume mesmo nível',
+            }
+        };
+
+        // ---------- ELEMENTOS DEL DOM ----------
+        const dom = {
+            title: document.getElementById('main-title'),
+            yourStatsTitle: document.getElementById('your-stats-title'),
+            enemyStatsTitle: document.getElementById('enemy-stats-title'),
+            labelCr: document.getElementById('label-cr'),
+            labelCdmg: document.getElementById('label-cdmg'),
+            labelBr: document.getElementById('label-br'),
+            labelIg: document.getElementById('label-ig'),
+            labelBrs: document.getElementById('label-brs'),
+            labelTen: document.getElementById('label-ten'),
+            labelCdmgr: document.getElementById('label-cdmgr'),
+            labelBlk: document.getElementById('label-blk'),
+            labelBdr: document.getElementById('label-bdr'),
+            labelBrecov: document.getElementById('label-brecov'),
+            resultTitle1: document.getElementById('result-title-1'),
+            resultTitle2: document.getElementById('result-title-2'),
+            calcBtn: document.getElementById('calc-btn'),
+            result1: document.getElementById('result-1'),
+            result2: document.getElementById('result-2'),
+            sameLevelNote: document.getElementById('same-level-note'),
+            totalCdmgSpan: document.getElementById('total-cdmg-display'),
+            // inputs
+            cr: document.getElementById('cr'),
+            cdmg: document.getElementById('cdmg'),
+            br: document.getElementById('br'),
+            ig: document.getElementById('ig'),
+            brs: document.getElementById('brs'),
+            ten: document.getElementById('ten'),
+            cdmgr: document.getElementById('cdmgr'),
+            blk: document.getElementById('blk'),
+            bdr: document.getElementById('bdr'),
+            brecov: document.getElementById('brecov'),
+        };
+
+        let currentLang = 'es';
+
+        // ---------- ACTUALIZAR INTERFAZ SEGÚN IDIOMA ----------
+        function setLanguage(lang) {
+            const t = texts[lang];
+            dom.title.innerText = t.mainTitle;
+            dom.yourStatsTitle.innerText = t.yourStats;
+            dom.enemyStatsTitle.innerText = t.enemyStats;
+            dom.labelCr.innerText = t.labelCr;
+            dom.labelCdmg.innerText = t.labelCdmg;
+            dom.labelBr.innerText = t.labelBr;
+            dom.labelIg.innerText = t.labelIg;
+            dom.labelBrs.innerText = t.labelBrs;
+            dom.labelTen.innerText = t.labelTen;
+            dom.labelCdmgr.innerText = t.labelCdmgr;
+            dom.labelBlk.innerText = t.labelBlk;
+            dom.labelBdr.innerText = t.labelBdr;
+            dom.labelBrecov.innerText = t.labelBrecov;
+            dom.resultTitle1.innerText = t.resultTitle1;
+            dom.resultTitle2.innerText = t.resultTitle2;
+            dom.calcBtn.innerText = t.calcBtn;
+            dom.sameLevelNote.innerText = t.sameLevel;
+            // actualizar botones de idioma
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            if (lang === 'es') document.getElementById('btn-es').classList.add('active');
+            else document.getElementById('btn-pt').classList.add('active');
+
+            // recalcular para mostrar textos actualizados
+            calcular();
+        }
+
+        // ---------- ACTUALIZAR TOTAL CDMG ----------
+        function atualizarTotalCdmg() {
+            let extra = parseFloat(dom.cdmg.value) || 0;
+            let total = 150 + extra;
+            dom.totalCdmgSpan.innerHTML = `⚡ total: ${total}%`;
+        }
+        dom.cdmg.addEventListener('input', atualizarTotalCdmg);
+        atualizarTotalCdmg();
+
+        // ---------- LÓGICA DE CÁLCULO ----------
+        function calcular() {
+            // Leer valores (numbers)
+            const cr = parseFloat(dom.cr.value) || 0;
+            const cdmgExtra = parseFloat(dom.cdmg.value) || 0;
+            const br = parseFloat(dom.br.value) || 0;
+            const ig = parseFloat(dom.ig.value) || 0;
+            const brs = parseFloat(dom.brs.value) || 0;
+            const ten = parseFloat(dom.ten.value) || 0;
+            const cdmgr = parseFloat(dom.cdmgr.value) || 0;
+            const blk = parseFloat(dom.blk.value) || 0;
+            const bdr = parseFloat(dom.bdr.value) || 0;
+            const brecov = parseFloat(dom.brecov.value) || 0;
+
+            // Netos
+            let netCrit = cr - ten;
+            if (netCrit < 0) netCrit = 0;
+            let netBlock = blk - br;
+            if (netBlock < 0) netBlock = 0;
+
+            const finalCdmg = 150 + cdmgExtra - cdmgr; // puede ser negativo, pero lo limitamos a un mínimo razonable
+            const netIg = ig - bdr; // ignorar bloqueo neto (puede ser negativo, pero se trata en fórmula)
+            const netBreco = brecov - brs; // recuperación neta
+            // factor de daño bloqueado
+            let blockedMult = (1 - 0.5 * (1 - netIg / 100)) * (1 - netBreco / 100);
+            if (blockedMult < 0) blockedMult = 0; // no puede ser negativo
+
+            const sum = netCrit + netBlock;
+
+            let critFinal, blockFinal;
+            let oldCrit = netCrit / 100;
+            let oldBlock = netBlock / 100;
+            if (oldCrit > 1) oldCrit = 1;
+            if (oldBlock > 1) oldBlock = 1;
+
+            if (sum > 100) {
+                critFinal = netCrit / sum;
+                blockFinal = netBlock / sum;
+            } else {
+                critFinal = netCrit / 100;
+                blockFinal = netBlock / 100;
+                if (critFinal > 1) critFinal = 1;
+                if (blockFinal > 1) blockFinal = 1;
+            }
+
+            // probabilidades actuales
+            const whiteChance = (1 - critFinal) * (1 - blockFinal);
+            const blockChance = (1 - critFinal) * blockFinal;
+            const totalDmg = critFinal * (finalCdmg / 100) + whiteChance + blockChance * blockedMult;
+
+            // viejas (pre-1.32)
+            const oldWhite = (1 - oldCrit) * (1 - oldBlock);
+            const oldBlockChance = (1 - oldCrit) * oldBlock;
+            const oldTotalDmg = oldCrit * (finalCdmg / 100) + oldWhite + oldBlockChance * blockedMult;
+
+            // formatear resultados según idioma
+            const t = texts[currentLang];
+
+            // Resultado 1 (actual)
+            let res1 = '';
+            res1 += `${t.critChance} ${(critFinal * 100).toFixed(2)}%<br>`;
+            res1 += `${t.ifNotCrit} ${(blockFinal * 100).toFixed(2)}%<br><br>`;
+            res1 += `${t.overall}<br>`;
+            res1 += `${t.critYellow} ${(critFinal * 100).toFixed(2)}%<br>`;
+            res1 += `${t.white} ${(whiteChance * 100).toFixed(2)}%<br>`;
+            res1 += `${t.blockedGray} ${(blockChance * 100).toFixed(2)}%<br>`;
+            res1 += t.dmgOutput.replace('{0}', (totalDmg * 100).toFixed(2));
+
+            // Resultado 2 (comparación)
+            let res2 = '';
+            if (sum > 100) {
+                res2 += t.oldAnalysisHigh + '<br><br>';
+                res2 += `${t.oldChances}<br>`;
+                res2 += `${t.critYellow} ${(oldCrit * 100).toFixed(2)}%<br>`;
+                res2 += `${t.white} ${(oldWhite * 100).toFixed(2)}%<br>`;
+                res2 += `${t.blockedGray} ${(oldBlockChance * 100).toFixed(2)}%<br>`;
+                res2 += t.avgOld.replace('{0}', (oldTotalDmg * 100).toFixed(2)) + '<br><br>';
+                let loss = (1 - totalDmg / oldTotalDmg) * 100;
+                if (loss < 0) loss = 0;
+                res2 += t.dmgLoss.replace('{0}', loss.toFixed(2));
+            } else {
+                res2 += t.oldAnalysisLow;
+                // Opcional: mostrar valores viejos (que son iguales a los actuales)
+                res2 += `<br><br>${t.oldChances}<br>`;
+                res2 += `${t.critYellow} ${(oldCrit * 100).toFixed(2)}%<br>`;
+                res2 += `${t.white} ${(oldWhite * 100).toFixed(2)}%<br>`;
+                res2 += `${t.blockedGray} ${(oldBlockChance * 100).toFixed(2)}%<br>`;
+                res2 += t.avgOld.replace('{0}', (oldTotalDmg * 100).toFixed(2));
+            }
+
+            dom.result1.innerHTML = res1;
+            dom.result2.innerHTML = res2;
+        }
+
+        // evento click botón
+        dom.calcBtn.addEventListener('click', calcular);
+
+        // cambiar idioma
+        document.getElementById('btn-es').addEventListener('click', () => {
+            currentLang = 'es';
+            setLanguage('es');
+        });
+        document.getElementById('btn-pt').addEventListener('click', () => {
+            currentLang = 'pt';
+            setLanguage('pt');
+        });
+
+        // inicializar español y calcular
+        setLanguage('es');
+    })();
+</script>
+</body>
+</html>
